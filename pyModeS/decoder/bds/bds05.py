@@ -1,20 +1,14 @@
 # ------------------------------------------
 #   BDS 0,5
 #   ADS-B TC=9-18
-#   Airborne position
+#   Airborn position
 # ------------------------------------------
 
-from __future__ import annotations
-
-from datetime import datetime
-
-from ... import common
+from pyModeS import common
 
 
-def airborne_position(
-    msg0: str, msg1: str, t0: int | datetime, t1: int | datetime
-) -> None | tuple[float, float]:
-    """Decode airborne position from a pair of even and odd position message
+def airborne_position(msg0, msg1, t0, t1):
+    """Decode airborn position from a pair of even and odd position message
 
     Args:
         msg0 (string): even message (28 hexdigits)
@@ -65,8 +59,7 @@ def airborne_position(
         return None
 
     # compute ni, longitude index m, and longitude
-    # (people pass int+int or datetime+datetime)
-    if t0 > t1:  # type: ignore
+    if t0 > t1:
         lat = lat_even
         nl = common.cprNL(lat)
         ni = max(common.cprNL(lat) - 0, 1)
@@ -85,9 +78,7 @@ def airborne_position(
     return round(lat, 5), round(lon, 5)
 
 
-def airborne_position_with_ref(
-    msg: str, lat_ref: float, lon_ref: float
-) -> tuple[float, float]:
+def airborne_position_with_ref(msg, lat_ref, lon_ref):
     """Decode airborne position with only one message,
     knowing reference nearby location, such as previously calculated location,
     ground station, or airport location, etc. The reference position shall
@@ -129,10 +120,10 @@ def airborne_position_with_ref(
 
     lon = d_lon * (m + cprlon)
 
-    return round(lat, 5), round(lon, 5)
+    return round(lat, 6), round(lon, 6)
 
 
-def altitude(msg: str) -> None | int:
+def altitude(msg):
     """Decode aircraft altitude
 
     Args:
@@ -144,14 +135,16 @@ def altitude(msg: str) -> None | int:
 
     tc = common.typecode(msg)
 
-    if tc is None or tc < 9 or tc == 19 or tc > 22:
-        raise RuntimeError("%s: Not an airborne position message" % msg)
+    if 0< tc < 9 or tc == 19 or tc > 22:
+        raise RuntimeError("%s: Not a airborn position message" % msg)
 
     mb = common.hex2bin(msg)[32:]
     altbin = mb[8:20]
 
     if tc < 19:
         altcode = altbin[0:6] + "0" + altbin[6:]
-        return common.altitude(altcode)
+        alt = common.altitude(altcode)
     else:
-        return common.bin2int(altbin) * 3.28084  # type: ignore
+        alt = common.bin2int(altbin) * 3.28084
+
+    return alt
